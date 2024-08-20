@@ -1,0 +1,8 @@
+<RCC>
+  <qresource>
+    <file>qtlogo.png</file>
+    <file>RectL.bmp</file>
+    <file>Depth.exr</file>
+    <file>Depth.bmp</file>
+  </qresource>
+</RCC>
