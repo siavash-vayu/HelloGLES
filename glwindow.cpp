@@ -43,7 +43,7 @@ GLWindow::GLWindow()
     m_world.setToIdentity();
     m_world.translate(0, 0, -1);
     m_world.rotate(180, 1, 0, 0);
-
+    m_mousePressed = false;
     /*setMouseTracking(true);
 
     // Optionally grab mouse and keyboard focus
@@ -91,25 +91,29 @@ GLWindow::GLWindow()
 void GLWindow::mousePressEvent(QMouseEvent *event)
 {
     m_lastMousePosition = event->pos();
+    m_mousePressed = true;
 }
 
 void GLWindow::mouseMoveEvent(QMouseEvent *event)
 {
-    int dx = event->x() - m_lastMousePosition.x();
-    int dy = event->y() - m_lastMousePosition.y();
+    if (m_mousePressed)
+    {
+        int dx = event->x() - m_lastMousePosition.x();
+        int dy = event->y() - m_lastMousePosition.y();
 
-    m_yaw += dx * 0.5f;  // Adjust the sensitivity as needed
-    m_pitch += dy * 0.5f;
+        m_yaw += dx * 0.5f;  // Adjust the sensitivity as needed
+        m_pitch += dy * 0.5f;
 
-    m_lastMousePosition = event->pos();
+        m_lastMousePosition = event->pos();
 
-    m_uniformsDirty = true;
-    update();  // Trigger a redraw
+        m_uniformsDirty = true;
+        update();  // Trigger a redraw
+    }
 }
 
 void GLWindow::mouseReleaseEvent(QMouseEvent *event)
 {
-    // No special action needed on release
+    m_mousePressed = false;
 }
 
 void GLWindow::keyPressEvent(QKeyEvent *event)
@@ -118,10 +122,10 @@ void GLWindow::keyPressEvent(QKeyEvent *event)
 
     switch (event->key()) {
     case Qt::Key_W:
-        m_eye.setZ(m_eye.z() - step);   // Move up
+        m_eye.setY(m_eye.y() - step);   // Move up
         break;
     case Qt::Key_S:
-        m_eye.setZ(m_eye.z() + step);   // Move down
+        m_eye.setY(m_eye.y() + step);   // Move down
         break;
     case Qt::Key_A:
         m_eye.setX(m_eye.x() - step);  // Pan left
@@ -140,7 +144,7 @@ void GLWindow::keyPressEvent(QKeyEvent *event)
 void GLWindow::wheelEvent(QWheelEvent *event)
 {
     float delta = event->angleDelta().y() / 120.0f;  // 120 is the typical delta value for one notch of the wheel
-    m_eye.setZ(m_eye.z() - delta);  // Zoom in or out based on wheel movement
+    m_eye.setZ(m_eye.z() - 5 * delta);  // Zoom in or out based on wheel movement
 
     m_uniformsDirty = true;
     update();  // Trigger a redraw
@@ -167,7 +171,7 @@ void GLWindow::startSecondStage()
 
 void GLWindow::setZ(float v)
 {
-    //m_eye.setZ(v);
+    m_eye.setZ(v);
     m_uniformsDirty = true;
     update();
 }
@@ -193,12 +197,15 @@ static const char *vertexShaderSource =
     "uniform mat4 projMatrix;\n"
     "uniform mat4 camMatrix;\n"
     "uniform mat4 worldMatrix;\n"
+    "uniform vec2 translation;\n"
 
     "out vec2 texCoord;\n"
 
     "void main() {\n"
+        "vec3 translatedVertex = vertex;\n"
+        "translatedVertex.xy += translation;  // Apply the translation to x and y coordinates\n"
         "texCoord = vec2(vertex.x / 784.0, vertex.y / 448.0);\n"
-        "gl_Position = projMatrix * camMatrix * worldMatrix * vec4(vertex, 1.0);\n"
+        "gl_Position = projMatrix * camMatrix * worldMatrix * vec4(translatedVertex, 1.0);\n"
     "}\n";
 
 static const char *fragmentShaderSource =
@@ -218,9 +225,11 @@ QByteArray versionedShaderCode(const char *src)
     QByteArray versionedSrc;
 
     if (QOpenGLContext::currentContext()->isOpenGLES())
-        versionedSrc.append(QByteArrayLiteral("#version 300 es\n"));
+        //versionedSrc.append(QByteArrayLiteral("#version 300 es\n"));
+        versionedSrc.append(QByteArrayLiteral("#version 330 core\n"));
     else
-        versionedSrc.append(QByteArrayLiteral("#version 330\n"));
+        //versionedSrc.append(QByteArrayLiteral("#version 330\n"));
+        versionedSrc.append(QByteArrayLiteral("#version 330 core\n"));
 
     versionedSrc.append(src);
     return versionedSrc;
@@ -234,8 +243,6 @@ void GLWindow::initializeGL()
         delete m_texture;
         m_texture = 0;
     }
-
-    m_eye = QVector3D(0, 0, 5.0f);  // Move the camera farther away along the z-axis
     
     //QImage img("../qtlogo.png");
     QImage img("../RectL.bmp");
@@ -259,6 +266,7 @@ void GLWindow::initializeGL()
     m_worldMatrixLoc = m_program->uniformLocation("worldMatrix");
     m_myMatrixLoc = m_program->uniformLocation("myMatrix");
     m_lightPosLoc = m_program->uniformLocation("lightPos");
+    int translation = m_program->uniformLocation("translation");
 
     // Create a VAO. Not strictly required for ES 3, but it is for plain OpenGL.
     if (m_vao) {
@@ -283,9 +291,11 @@ void GLWindow::initializeGL()
     std::cout << "depthMap.cols = " << depthMap.cols << std::endl;
     std::cout << "depthMap.rows = " << depthMap.rows << std::endl;
 
-    float centerX = depthMap.cols / 2.0f;
-    float centerY = depthMap.rows / 2.0f;
+    float centerX = (depthMap.cols - 1) / 2.0f;
+    float centerY = (depthMap.rows - 1) / 2.0f;
+    float centerZ = 0.0f;  // Assuming flat ground, or you can calculate the average depth.
 
+    float initialDistance = 5.0f;  // Adjust based on your scene size.
 
     float scaleFactor = 0.1f;  // Adjust this factor based on your depth map values
     float depthMult = 30.0f;
@@ -304,6 +314,10 @@ void GLWindow::initializeGL()
         }
     }
 
+    m_eye = QVector3D(0, 0, 500.0f);  // Move the camera farther away along the z-axis
+    QVector2D centeredTranslation(-centerX, -centerY);  // Center the image
+    m_program->setUniformValue(translation, centeredTranslation);    
+
     //m_vbo->allocate(m_logo.constData(), m_logo.count() * sizeof(GLfloat));
     m_vbo->allocate(vertices.data(), vertices.size() * sizeof(GLfloat));
     f->glEnableVertexAttribArray(0);
@@ -311,6 +325,7 @@ void GLWindow::initializeGL()
     f->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), 0);
     f->glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat),
                              reinterpret_cast<void *>(3 * sizeof(GLfloat)));
+
     m_vbo->release();
 
     f->glEnable(GL_DEPTH_TEST);

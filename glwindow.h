@@ -72,6 +72,7 @@ private:
     QPoint m_lastMousePosition;
     float m_yaw = 0.0f;  // Rotation around the y-axis
     float m_pitch = 0.0f;  // Rotation around the x-axis
+    bool m_mousePressed;
 };
 
 #endif
