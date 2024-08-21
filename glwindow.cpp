@@ -128,10 +128,10 @@ void GLWindow::keyPressEvent(QKeyEvent *event)
         m_eye.setY(m_eye.y() + step);   // Move down
         break;
     case Qt::Key_A:
-        m_eye.setX(m_eye.x() - step);  // Pan left
+        m_eye.setX(m_eye.x() + step);  // Pan left
         break;
     case Qt::Key_D:
-        m_eye.setX(m_eye.x() + step);  // Pan right
+        m_eye.setX(m_eye.x() - step);  // Pan right
         break;
     default:
         QOpenGLWindow::keyPressEvent(event);  // Call the base class implementation for other keys
@@ -144,7 +144,7 @@ void GLWindow::keyPressEvent(QKeyEvent *event)
 void GLWindow::wheelEvent(QWheelEvent *event)
 {
     float delta = event->angleDelta().y() / 120.0f;  // 120 is the typical delta value for one notch of the wheel
-    m_eye.setZ(m_eye.z() - 5 * delta);  // Zoom in or out based on wheel movement
+    m_eye.setZ(m_eye.z() - 10 * delta);  // Zoom in or out based on wheel movement
 
     m_uniformsDirty = true;
     update();  // Trigger a redraw
@@ -225,11 +225,10 @@ QByteArray versionedShaderCode(const char *src)
     QByteArray versionedSrc;
 
     if (QOpenGLContext::currentContext()->isOpenGLES())
-        //versionedSrc.append(QByteArrayLiteral("#version 300 es\n"));
-        versionedSrc.append(QByteArrayLiteral("#version 330 core\n"));
+        versionedSrc.append(QByteArrayLiteral("#version 300 es\n"));
     else
-        //versionedSrc.append(QByteArrayLiteral("#version 330\n"));
-        versionedSrc.append(QByteArrayLiteral("#version 330 core\n"));
+        versionedSrc.append(QByteArrayLiteral("#version 330\n"));
+        
 
     versionedSrc.append(src);
     return versionedSrc;
@@ -245,10 +244,10 @@ void GLWindow::initializeGL()
     }
     
     //QImage img("../qtlogo.png");
-    QImage img("../RectL.bmp");
+    QImage img("../NFOV/boston_narrow_base/RectL.bmp");
     Q_ASSERT(!img.isNull());
-    //m_texture = new QOpenGLTexture(img.scaled(784, 448).mirrored());
-    m_texture = new QOpenGLTexture(img.scaled(784, 448));
+    //m_texture = new QOpenGLTexture(img.scaled(784, 448));
+    m_texture = new QOpenGLTexture(img);
 
     if (m_program) {
         delete m_program;
@@ -286,7 +285,7 @@ void GLWindow::initializeGL()
     m_vbo->create();
     m_vbo->bind();
 
-    cv::Mat depthMap = cv::imread("../Depth.exr", cv::IMREAD_UNCHANGED);
+    cv::Mat depthMap = cv::imread("../NFOV/boston_narrow_base/Depth_RAW.exr", cv::IMREAD_UNCHANGED);
 
     std::cout << "depthMap.cols = " << depthMap.cols << std::endl;
     std::cout << "depthMap.rows = " << depthMap.rows << std::endl;
@@ -295,22 +294,20 @@ void GLWindow::initializeGL()
     float centerY = (depthMap.rows - 1) / 2.0f;
     float centerZ = 0.0f;  // Assuming flat ground, or you can calculate the average depth.
 
-    float initialDistance = 5.0f;  // Adjust based on your scene size.
-
-    float scaleFactor = 0.1f;  // Adjust this factor based on your depth map values
-    float depthMult = 30.0f;
+    float scaleFactor = 1.0f;  // Adjust this factor based on your depth map values
+    float depthMult = 1.0f;
 
     for (int y = 0; y < depthMap.rows; ++y) {
         for (int x = 0; x < depthMap.cols; ++x) {
             float z = depthMap.at<float>(y, x);  // z-coordinate from the depth map
-            vertices.push_back(static_cast<float>(x));  // x-coordinate
-            vertices.push_back(static_cast<float>(y));  // y-coordinate
+            vertices.push_back(static_cast<float>(x) * scaleFactor);  // x-coordinate
+            vertices.push_back(static_cast<float>(y) * scaleFactor);  // y-coordinate
             vertices.push_back(z * depthMult);  // z-coordinate from the depth map
 
             // Normal vector - set to a default value if not calculated
-            vertices.push_back(0.0f);  // nx
+            /*vertices.push_back(0.0f);  // nx
             vertices.push_back(0.0f);  // ny
-            vertices.push_back(1.0f);  // nz
+            vertices.push_back(1.0f);  // nz*/
         }
     }
 
@@ -335,7 +332,8 @@ void GLWindow::initializeGL()
 void GLWindow::resizeGL(int w, int h)
 {
     m_proj.setToIdentity();
-    m_proj.perspective(45.0f, GLfloat(w) / h, 0.01f, 1000.0f);
+    //m_proj.perspective(45.0f, GLfloat(w) / h, 0.01f, 1000.0f);
+    m_proj.perspective(45.0f, GLfloat(w) / h, 0.01f, 5000.0f);
     m_uniformsDirty = true;
 }
 
