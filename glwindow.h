@@ -1,12 +1,12 @@
 #ifndef GLWIDGET_H
 #define GLWIDGET_H
 
+#include <opencv2/opencv.hpp>
 #include <QOpenGLWindow>
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include <QMatrix4x4>
 #include <QVector3D>
-#include "../hellogl2/logo.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -31,6 +31,7 @@ public:
     void initializeGL();
     void resizeGL(int w, int h);
     void paintGL();
+    void updateFrame(const cv::Mat& newDepthMap, const cv::Mat& newRGBImage);
 
     float z() const { return m_eye.z(); }
     void setZ(float v);
@@ -39,8 +40,6 @@ public:
     void setR(float v);
     float r2() const { return m_r2; }
     void setR2(float v);
-private slots:
-    void startSecondStage();
 
 protected:
     // Event handlers for mouse interaction
@@ -55,12 +54,12 @@ private:
     QOpenGLShaderProgram *m_program;
     QOpenGLBuffer *m_vbo;
     QOpenGLVertexArrayObject *m_vao;
-    Logo m_logo;
     int m_projMatrixLoc;
     int m_camMatrixLoc;
     int m_worldMatrixLoc;
     int m_myMatrixLoc;
     int m_lightPosLoc;
+    int m_translation;
     QMatrix4x4 m_proj;
     QMatrix4x4 m_world;
     QVector3D m_eye;
@@ -68,6 +67,7 @@ private:
     bool m_uniformsDirty;
     float m_r;
     float m_r2;
+    std::vector<GLfloat> m_vertices;
 
     QPoint m_lastMousePosition;
     float m_yaw = 0.0f;  // Rotation around the y-axis

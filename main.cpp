@@ -50,6 +50,7 @@
 
 #include <QGuiApplication>
 #include <QSurfaceFormat>
+#include <QTimer>
 #include <QOpenGLContext>
 
 #include "glwindow.h"
@@ -82,7 +83,15 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(fmt);
 
     GLWindow glWindow;
+    
     glWindow.showMaximized();
+
+    // Call updateFrame after the window is shown, ensuring the OpenGL context is ready
+    QTimer::singleShot(100, [&glWindow]() {
+        glWindow.updateFrame(cv::imread("../NFOV/sikorsky/Depth_RAW.exr", cv::IMREAD_UNCHANGED),
+                             cv::imread("../NFOV/sikorsky/RectL.bmp", cv::IMREAD_UNCHANGED));
+    });
+
 
     return app.exec();
 }
