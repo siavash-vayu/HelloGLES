@@ -270,6 +270,7 @@ void GLWindow::paintGL()
         m_program->setUniformValue(m_worldMatrixLoc, wm);
     }
 
+    glPointSize(2.0f);
     m_vao->bind();  // Ensure the VAO is bound
     f->glDrawArrays(GL_POINTS, 0, m_vertices.size() / 3);
 }
