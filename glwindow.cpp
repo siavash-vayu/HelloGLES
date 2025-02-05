@@ -181,12 +181,12 @@ void GLWindow::initializeGL()
     m_vao->release();
 
     // 9) Set up some default camera position or transformations
-    m_eye = QVector3D(0, 0, 500.0f);
+    m_eye = QVector3D(0, 0, -10.0f);
     // If you want to shift the point cloud so it’s centered:
     float centerX = (maxWidth  - 1) / 2.0f;
     float centerY = (maxHeight - 1) / 2.0f;
     QVector2D centeredTranslation(-centerX, -centerY);
-    m_program->setUniformValue(m_translation, centeredTranslation);
+    //m_program->setUniformValue(m_translation, centeredTranslation);
 
     // 10) Configure OpenGL states (depth test, cull face, etc.)
     qDebug() << "Enabling depth test and face culling...";
@@ -245,11 +245,12 @@ void GLWindow::updateFrame(const cv::Mat& newDepthMap, const cv::Mat& newRGBImag
     cloudGPU.download(cloudCPU);
 
     qDebug() << "Processing depth map...";
-    const float scaleXY = 10.0f;  // Adjust as needed
-    const float scaleZ = 1.0f;   // Z remains unchanged
 
     std::vector<GLfloat> interleavedData;
     interleavedData.reserve(newDepthMap.total() * 6);  // 6 floats per pixel
+
+    float scaleXY = 1.0f;
+    float scaleZ  = 1.0f; // or 1.0f, or whatever
 
     for (int y = 0; y < newDepthMap.rows; ++y) {
         for (int x = 0; x < newDepthMap.cols; ++x) {
@@ -260,9 +261,9 @@ void GLWindow::updateFrame(const cv::Mat& newDepthMap, const cv::Mat& newRGBImag
             cv::Vec3b colorBGR = newRGBImage.at<cv::Vec3b>(y, x);
 
             // 3) Push back (X, Y, Z) then (R, G, B)
-            interleavedData.push_back(point[0]);                // X
-            interleavedData.push_back(point[1]);                // Y
-            interleavedData.push_back(point[2]);                // Z
+            interleavedData.push_back(point[0] * scaleXY);                // X
+            interleavedData.push_back(point[1] * scaleXY);                // Y
+            interleavedData.push_back(point[2] * scaleZ);                // Z
             interleavedData.push_back(colorBGR[2] / 255.0f);    // R
             interleavedData.push_back(colorBGR[1] / 255.0f);    // G
             interleavedData.push_back(colorBGR[0] / 255.0f);    // B
