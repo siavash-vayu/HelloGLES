@@ -2,6 +2,7 @@
     "files.associations": {
         "functional": "cpp",
         "cmath": "cpp",
-        "complex": "cpp"
+        "complex": "cpp",
+        "condition_variable": "cpp"
     }
 }

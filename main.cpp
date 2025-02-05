@@ -61,25 +61,35 @@ int main(int argc, char *argv[])
     
     glWindow.showMaximized();
 
-    cv::Mat depth = cv::imread("../NFOV/boston_narrow_base/Depth_RAW.exr", cv::IMREAD_UNCHANGED);
-    cv::Mat rgb = cv::imread("../NFOV/boston_narrow_base/RectL.bmp", cv::IMREAD_UNCHANGED);
+    cv::Mat depth_1 = cv::imread("../NFOV/boston_narrow_base/Depth_RAW.exr", cv::IMREAD_UNCHANGED);
+    cv::Mat rgb_1 = cv::imread("../NFOV/boston_narrow_base/RectL.bmp", cv::IMREAD_UNCHANGED);
 
-    cv::Mat depth_padded;
-    cv::Mat rgb_padded;
+    cv::Mat depth_resized;
+    cv::Mat rgb_resized;
 
-    cv::resize(depth, depth_padded, cv::Size(784, 448));
-    cv::resize(rgb, rgb_padded, cv::Size(784, 448));
-
-    //cv::imshow("depth", depth_padded);
-    //cv::imshow("rgb", rgb_padded);
-    //cv::waitKey(0);
+    cv::resize(depth_1, depth_resized, cv::Size(784, 448));
+    cv::resize(rgb_1, rgb_resized, cv::Size(784, 448));
 
     // Call updateFrame after the window is shown, ensuring the OpenGL context is ready
-    QTimer::singleShot(100, [&glWindow, depth_padded, rgb_padded]() {
-        glWindow.updateFrame(depth_padded,
-                             rgb_padded);
+    QTimer::singleShot(2000, [&glWindow, depth_resized, rgb_resized]() {
+        glWindow.updateFrame(depth_resized,
+                             rgb_resized);
     });
 
+    cv::Mat depth_2 = cv::imread("../NFOV/sikorsky/Depth_RAW.exr", cv::IMREAD_UNCHANGED);
+    cv::Mat rgb_2 = cv::imread("../NFOV/sikorsky/RectL.bmp", cv::IMREAD_UNCHANGED);
+
+    cv::Mat depth_resized_2;
+    cv::Mat rgb_resized_2;
+
+    cv::resize(depth_2, depth_resized_2, cv::Size(784, 448));
+    cv::resize(rgb_2, rgb_resized_2, cv::Size(784, 448));
+
+    // Call updateFrame after the window is shown, ensuring the OpenGL context is ready
+    QTimer::singleShot(4000, [&glWindow, depth_resized_2, rgb_resized_2]() {
+        glWindow.updateFrame(depth_resized_2,
+                             rgb_resized_2);
+    });
 
     return app.exec();
 }

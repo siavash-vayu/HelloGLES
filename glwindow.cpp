@@ -53,7 +53,6 @@ static const char *vertexShaderSource =
     "void main() {\n"
         "vec3 translatedVertex = vertex;\n"
         "translatedVertex.xy += translation;  // Apply the translation to x and y coordinates\n"
-        //"texCoord = vec2(vertex.x / 784.0, vertex.y / 448.0);\n"
         "gl_Position = projMatrix * camMatrix * worldMatrix * vec4(translatedVertex, 1.0);\n"
         "fragColor = color;\n"  // Pass color
     "}\n";
@@ -215,11 +214,11 @@ void GLWindow::updateFrame(const cv::Mat& newDepthMap, const cv::Mat& newRGBImag
     }
 
     makeCurrent(); 
-    QOpenGLFunctions *f = QOpenGLContext::currentContext()->functions();
-    if (!f) {
-        qDebug() << "Failed to get OpenGL functions!";
-        return;
-    }
+    // QOpenGLFunctions *f = QOpenGLContext::currentContext()->functions();
+    // if (!f) {
+    //     qDebug() << "Failed to get OpenGL functions!";
+    //     return;
+    // }
 
     m_vertices.clear();
     m_colors.clear();
@@ -317,7 +316,7 @@ void GLWindow::paintGL()
         m_program->setUniformValue(m_worldMatrixLoc, wm);
     }
 
-    glPointSize(2.0f);
+    glPointSize(3.0f);
     m_vao->bind();  // Ensure the VAO is bound
     f->glDrawArrays(GL_POINTS, 0, m_numPoints);
 
@@ -339,8 +338,8 @@ void GLWindow::mouseMoveEvent(QMouseEvent *event)
         int dx = event->x() - m_lastMousePosition.x();
         int dy = event->y() - m_lastMousePosition.y();
 
-        m_yaw += dx * 0.5f;  // Adjust the sensitivity as needed
-        m_pitch += dy * 0.5f;
+        m_yaw += dx * 0.2f;  // Adjust the sensitivity as needed
+        m_pitch += dy * 0.2f;
 
         m_lastMousePosition = event->pos();
 
@@ -356,7 +355,7 @@ void GLWindow::mouseReleaseEvent(QMouseEvent *event)
 
 void GLWindow::keyPressEvent(QKeyEvent *event)
 {
-    float step = 5.0;//0.5f;  // Adjust this step value as needed
+    float step = 0.5f;//0.5f;  // Adjust this step value as needed
 
     switch (event->key()) {
     case Qt::Key_W:
@@ -382,7 +381,7 @@ void GLWindow::keyPressEvent(QKeyEvent *event)
 void GLWindow::wheelEvent(QWheelEvent *event)
 {
     float delta = event->angleDelta().y() / 120.0f;  // 120 is the typical delta value for one notch of the wheel
-    m_eye.setZ(m_eye.z() - 10 * delta);  // Zoom in or out based on wheel movement
+    m_eye.setZ(m_eye.z() - 2 * delta);  // Zoom in or out based on wheel movement
 
     m_uniformsDirty = true;
     update();  // Trigger a redraw
