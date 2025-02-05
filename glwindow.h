@@ -68,6 +68,8 @@ private:
     float m_r;
     float m_r2;
     std::vector<GLfloat> m_vertices;
+    std::vector<GLfloat> m_colors;
+    int m_numPoints;
 
     QPoint m_lastMousePosition;
     float m_yaw = 0.0f;  // Rotation around the y-axis
