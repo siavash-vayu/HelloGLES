@@ -205,12 +205,17 @@ void GLWindow::updateFrame(const cv::Mat& newDepthMap, const cv::Mat& newRGBImag
 
     m_vertices.clear();
 
+    float depthScale = 100.0f;
+
     qDebug() << "Processing depth map...";
     for (int y = 0; y < newDepthMap.rows; ++y) {
         for (int x = 0; x < newDepthMap.cols; ++x) {
             float z = newDepthMap.at<float>(y, x);
             m_vertices.push_back(static_cast<float>(x));
             m_vertices.push_back(static_cast<float>(y));
+
+            float mappedZ = depthScale * log(z + 1.0f);
+
             m_vertices.push_back(z);
         }
     }
@@ -270,6 +275,7 @@ void GLWindow::paintGL()
         m_program->setUniformValue(m_worldMatrixLoc, wm);
     }
 
+    glPointSize(3.0f);
     m_vao->bind();  // Ensure the VAO is bound
     f->glDrawArrays(GL_POINTS, 0, m_vertices.size() / 3);
 }
